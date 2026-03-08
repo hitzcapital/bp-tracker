@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { Minus, Plus, Camera, ScanLine, Loader2 } from 'lucide-react'
+import { Minus, Plus, Camera, ImageUp, Loader2 } from 'lucide-react'
 import { ActivityPicker } from './ActivityPicker'
 import { BPCategoryBadge } from './BPCategoryBadge'
 import { Button } from '../ui/Button'
@@ -24,19 +24,10 @@ export function MeasurementForm({ onSubmit, loading = false, onScanError }: Meas
   const [photo, setPhoto] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [scanning, setScanning] = useState(false)
-  const scanInputRef = useRef<HTMLInputElement>(null)
+  const cameraInputRef = useRef<HTMLInputElement>(null)
+  const galleryInputRef = useRef<HTMLInputElement>(null)
 
   const classification = classifyBP(systolic, diastolic)
-
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setPhoto(file)
-      const reader = new FileReader()
-      reader.onloadend = () => setPhotoPreview(reader.result as string)
-      reader.readAsDataURL(file)
-    }
-  }
 
   const handleScanPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -79,33 +70,47 @@ export function MeasurementForm({ onSubmit, loading = false, onScanError }: Meas
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Scan from Photo - Primary CTA */}
-      <button
-        type="button"
-        onClick={() => scanInputRef.current?.click()}
-        disabled={scanning}
-        className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 disabled:from-slate-600 disabled:to-slate-600 rounded-2xl text-white font-semibold transition-all shadow-lg shadow-blue-500/20"
-      >
-        {scanning ? (
-          <>
-            <Loader2 size={22} className="animate-spin" />
-            <span>Analysiere Foto...</span>
-          </>
-        ) : (
-          <>
-            <ScanLine size={22} />
-            <span>Foto scannen</span>
-          </>
-        )}
-        <input
-          ref={scanInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          className="hidden"
-          onChange={handleScanPhoto}
-        />
-      </button>
+      {/* Scan buttons */}
+      {scanning ? (
+        <div className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-slate-700 rounded-2xl text-white font-semibold">
+          <Loader2 size={22} className="animate-spin" />
+          <span>Analysiere Foto...</span>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 gap-3">
+          <button
+            type="button"
+            onClick={() => cameraInputRef.current?.click()}
+            className="flex flex-col items-center gap-2 px-4 py-4 bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-2xl text-white font-semibold transition-all shadow-lg shadow-blue-500/20"
+          >
+            <Camera size={24} />
+            <span className="text-sm">Kamera</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => galleryInputRef.current?.click()}
+            className="flex flex-col items-center gap-2 px-4 py-4 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 rounded-2xl text-white font-semibold transition-all shadow-lg shadow-purple-500/20"
+          >
+            <ImageUp size={24} />
+            <span className="text-sm">Aus Dateien</span>
+          </button>
+        </div>
+      )}
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={handleScanPhoto}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleScanPhoto}
+      />
 
       {/* Photo preview */}
       {photoPreview && (
@@ -188,17 +193,6 @@ export function MeasurementForm({ onSubmit, loading = false, onScanError }: Meas
           className="w-full px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
         />
       </div>
-
-      {/* Attach photo (without scan) */}
-      {!photoPreview && (
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-xl cursor-pointer hover:bg-slate-700 transition-colors">
-            <Camera size={18} className="text-slate-400" />
-            <span className="text-sm text-slate-300">Foto anhängen (ohne Scan)</span>
-            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handlePhotoChange} />
-          </label>
-        </div>
-      )}
 
       {/* Submit */}
       <Button type="submit" loading={loading} className="w-full" size="lg">
